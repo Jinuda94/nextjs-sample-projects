@@ -1,28 +1,15 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import PageNation from '../components/PageNation';
-import {
-  GetStaticProps,
-  GetStaticPropsContext,
-  GetStaticPropsResult,
-} from 'next';
+import { GetServerSideProps } from 'next';
+import Loading from '../components/Loading';
 
 interface pockemonListTypes {
   name: string;
   url: string;
 }
 
-interface PageParams {
-  [key: string]: any;
-  page?: string;
-}
-
-interface ContentPageProps {
-  list: any;
-  count: any;
-}
-
-const Home = ({ list, count }: any) => {
+const SSR = ({ list, count }: any) => {
   const router = useRouter();
   const { page } = router.query;
   let pageOrigin = 1;
@@ -38,14 +25,15 @@ const Home = ({ list, count }: any) => {
   return (
     <>
       <div className="grid grid-cols-5 gap-8">
-        {list?.map((pocketmon: pockemonListTypes) => {
+        {list.map((pocketmon: pockemonListTypes) => {
           const url = pocketmon.url.split('pokemon/', 2);
           const id = url[1].substring(0, url[1].lastIndexOf('/'));
           return (
             <div
-              onClick={() => onClick(id)}
+              // onClick={() => onClick(id, movie.original_title)}
               className="cursor-pointer border-2 border-solid rounded-lg border-gray-700 border-opacity-20 shadow-md rounded-xl delay-100 ease-in-out hover:scale-105 hover:-translate-x-3 max-w-full"
               key={id}
+              onClick={() => onClick(id)}
             >
               <img
                 className={'w-full'}
@@ -66,27 +54,23 @@ const Home = ({ list, count }: any) => {
           );
         })}
       </div>
-      <PageNation pageOrigin={pageOrigin} type={''} />
+      <PageNation pageOrigin={pageOrigin} type={'SSR'} />
     </>
   );
 };
 
-export const getStaticProps: GetStaticProps = async ({
-  params,
-}: GetStaticPropsContext<PageParams>): Promise<
-  GetStaticPropsResult<ContentPageProps>
-> => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { page } = context.query;
   let pageOrigin = 1;
-  if (params) {
-    const { page } = params;
-
+  if (page) {
     if (typeof page === 'string') {
       pageOrigin = parseInt(page);
     }
   }
-  const BASE_URL = process.env.BASE_URL;
   const { results, count } = await (
-    await fetch(`${BASE_URL}?offset=${pageOrigin}0&limit=10}`)
+    await fetch(
+      `http://localhost:3000/api/pocketList?page=${pageOrigin}0&limit=10`,
+    )
   ).json();
 
   return {
@@ -97,4 +81,4 @@ export const getStaticProps: GetStaticProps = async ({
   };
 };
 
-export default Home;
+export default SSR;

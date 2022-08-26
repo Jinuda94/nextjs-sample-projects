@@ -20,9 +20,10 @@ interface PageParams {
 interface ContentPageProps {
   list: any;
   count: any;
+  datetime: any;
 }
 
-const Home = ({ list, count }: any) => {
+const ISR = ({ list, count, datetime }: any) => {
   const router = useRouter();
   const { page } = router.query;
   let pageOrigin = 1;
@@ -35,8 +36,21 @@ const Home = ({ list, count }: any) => {
     router.push(`/detail/${id}`);
   };
 
+  const revalidate = () => {
+    fetch('/api/revalidate');
+  };
+
   return (
     <>
+      <h1 className={'text-rose-600 font-bold'}>{datetime}</h1>
+      <button
+        className={
+          'my-1.5 text-red-700 cursor-pointer border-2 border-solid rounded-lg border-red-700 border-opacity-20  shadow-md rounded-xl hover:border-blue-500 hover:text-blue-500 p-2 max-w-full'
+        }
+        onClick={() => revalidate()}
+      >
+        <h4 className={'font-sans'}>revalidate</h4>
+      </button>
       <div className="grid grid-cols-5 gap-8">
         {list?.map((pocketmon: pockemonListTypes) => {
           const url = pocketmon.url.split('pokemon/', 2);
@@ -66,7 +80,6 @@ const Home = ({ list, count }: any) => {
           );
         })}
       </div>
-      <PageNation pageOrigin={pageOrigin} type={''} />
     </>
   );
 };
@@ -76,6 +89,7 @@ export const getStaticProps: GetStaticProps = async ({
 }: GetStaticPropsContext<PageParams>): Promise<
   GetStaticPropsResult<ContentPageProps>
 > => {
+  console.log('[Next.js] Running getStaticProps...');
   let pageOrigin = 1;
   if (params) {
     const { page } = params;
@@ -89,12 +103,21 @@ export const getStaticProps: GetStaticProps = async ({
     await fetch(`${BASE_URL}?offset=${pageOrigin}0&limit=10}`)
   ).json();
 
+  const today = new Date();
+
+  const hours = today.getHours(); // 시
+  const minutes = today.getMinutes(); // 분
+  const seconds = today.getSeconds(); // 초
+  const datetime = hours + '시 ' + minutes + '분 ' + seconds + '초';
+
   return {
     props: {
       list: results,
       count: count,
+      datetime,
     },
+    revalidate: 10,
   };
 };
 
-export default Home;
+export default ISR;
